@@ -189,11 +189,6 @@ https://www.googleapis.com/auth/calendar
   - After booking: sends confirmation emails with an .ics attachment to patient and doctor (best-effort)
   - After cancellation/reschedule: sends notification emails to both patient and doctor
 
-There are simple test scripts in the repository:
-
-- `test-email.py` — quick SMTP login/send test (edit credentials inside or via env)
-- `test-google-calendar.py` — validates service account credentials (adjust SCOPES if you need event creation)
-
 ## Troubleshooting & common errors
 
 - "HUGGINGFACE_API_TOKEN missing": set `HUGGINGFACE_API_TOKEN` in `.env` or environment
