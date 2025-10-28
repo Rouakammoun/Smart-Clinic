@@ -4,7 +4,7 @@ A modern, AI-powered medical clinic management system with integrated appointmen
 
 ## 🌟 Features
 
-- **AI-Powered Triage Assistant**: Bilingual support for English and Roman Urdu
+- **AI-Powered Triage Assistant**: Bilingual support for English and French
 - **Smart Appointment Scheduling**: Automated booking system integrated with Google Calendar
 - **Doctor Management**: Comprehensive doctor profiles and availability management
 - **Real-time Chat Interface**: User-friendly web interface for patient interactions
@@ -85,7 +85,7 @@ Smart-Clinic/
 
 ### AI Triage Assistant
 
-- Multilingual support (English and Roman Urdu)
+- Multilingual support (English and French)
 - Smart specialty routing
 - Medical terminology mapping
 
@@ -106,5 +106,3 @@ Smart-Clinic/
 ## 👥 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-

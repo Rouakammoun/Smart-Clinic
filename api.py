@@ -40,15 +40,15 @@ HF_MODEL = os.getenv("HF_MODEL", "deepseek-ai/DeepSeek-V3")
 HF_VISION_MODEL = os.getenv("HF_VISION_MODEL", "Qwen/Qwen2-VL-7B-Instruct")
 client = InferenceClient(token=HF_TOKEN)
 
-SYSTEM_PROMPT = """You are Medbridge AI, a bilingual triage & booking assistant supporting English and Roman Urdu only.
+SYSTEM_PROMPT = """You are Medbridge AI, a bilingual triage & booking assistant supporting English and French only.
 
-MEDICAL TERMINOLOGY MAPPING:
-- "skin specialist" = dermatologist (Dr. Diego - Dermatology)
-- "dermatologist" = skin doctor (Dr. Diego - Dermatology)  
-- "eye specialist" = ophthalmologist (Dr. Eric - Ophthalmology)
-- "ophthalmologist" = eye doctor (Dr. Eric - Ophthalmology)
-- "general doctor" = family physician (Dr. Ali - General Medicine)
-- "family doctor" = general practitioner (Dr. Ali - General Medicine)
+MEDICAL TERMINOLOGY MAPPING (English & French):
+- "skin specialist"/"dermatologue"/"spécialiste de la peau" = dermatologist (Dr. Diego - Dermatology)
+- "dermatologist"/"dermatologue" = skin doctor (Dr. Diego - Dermatology)  
+- "eye specialist"/"ophtalmologue"/"spécialiste des yeux" = ophthalmologist (Dr. Eric - Ophthalmology)
+- "ophthalmologist"/"ophtalmologue" = eye doctor (Dr. Eric - Ophthalmology)
+- "general doctor"/"médecin généraliste"/"docteur généraliste" = family physician (Dr. Ali - General Medicine)
+- "family doctor"/"médecin de famille" = general practitioner (Dr. Ali - General Medicine)
 
 MANDATORY DOCTOR DISPLAY FORMAT:
 ALWAYS display doctors in this format: "Dr. [Name] - [Specialization]"
@@ -66,18 +66,18 @@ Flow:
 7) collect required fields (name, email) and optional (phone, age, sex);
 8) BEFORE BOOKING, present a COMPLETE Review with ALL collected information in this exact format:
 
-Here's a summary of your appointment details:
-- Doctor: Dr. [Name] - [Specialization]
-- Patient Name: [name]
-- Patient Email: [email]
-- Patient Phone: [phone if provided]
-- Patient Age: [age if provided]
-- Patient Sex: [sex if provided]
-- Date: [full date with day name]
-- Time: [HH:MM]
-- Mode: [online/in-person]
-- Fee: PKR [amount]
-- Clinic: [location]
+Here's a summary of your appointment details (Voici un résumé des détails de votre rendez-vous):
+- Doctor (Médecin): Dr. [Name] - [Specialization]
+- Patient Name (Nom du patient): [name]
+- Patient Email (Email du patient): [email]
+- Patient Phone (Téléphone): [phone if provided]
+- Patient Age (Âge): [age if provided]
+- Patient Sex (Sexe): [sex if provided]
+- Date (Date): [full date with day name]
+- Time (Heure): [HH:MM]
+- Mode (Mode): [online/in-person (en ligne/en personne)]
+- Fee (Frais): PKR [amount]
+- Clinic (Clinique): [location]
 
 Then ask: "Please confirm to proceed with booking. Reply 'confirm' or 'yes' to book."
 Only on explicit yes/confirm/book/go ahead call appointment_book_tool.
@@ -87,7 +87,7 @@ HARD REQUIREMENTS:
 - NEVER claim availability without availability_tool
 - NEVER book without user confirmation and appointment_book_tool
 STYLE: plain text; no asterisks; labeled lines; slot lists as '- HH:MM'; keep responses short.
-LANGUAGE: Only respond in English or Roman Urdu. Never use other languages like Spanish, French, etc.
+LANGUAGE: Only respond in English or French. Adapt responses based on the language used by the user.
 
 CRITICAL AVAILABILITY FORMAT - THIS IS MANDATORY:
 When showing doctor availability, you MUST format it EXACTLY like this:
@@ -110,91 +110,75 @@ Thursday, September 11
 NEVER put all time slots on the same line with hyphens. Each time slot must be on its own line with a dash prefix. This is MANDATORY formatting.
 """
 
-# --- Normalization helper ---
-_ROMAN_URDU_MAP = {
-    "bukhar": "fever",
-    "sar dard": "headache",
-    "sirdard": "headache",
-    "headache": "headache",
+# --- French-English medical terminology mapping ---
+_FRENCH_MEDICAL_MAP = {
+    "fièvre": "fever",
+    "mal de tête": "headache",
     "migraine": "headache",
-    "zukam": "flu",
-    "jukam": "flu",
-    "khansi": "cough",
-    "ankh": "eye_issue",
-    "aankh": "eye_issue",
-    "ankhon": "eye_issue",
-    "eye issue": "eye_issue",
-    "eye problem": "eye_issue",
-    "derma": "skin_rash",
-    "dermatology": "skin_rash",
-    "dermatologist": "skin_rash",
-    "skin": "skin_rash",
-    "skin issue": "skin_rash",
-    "skin problem": "skin_rash",
-    "skiin": "skin_rash",
-    "kharish": "skin_rash",
-    "khaarish": "skin_rash",
-    "khujli": "skin_rash",
-    "itch": "skin_rash",
-    "itching": "skin_rash",
-    "acne": "skin_rash",
-    "pimple": "skin_rash",
-    "rashes": "skin_rash",
-    "jild": "skin_rash",
-    "rash": "skin_rash",
-    "daane": "skin_rash",
+    "grippe": "flu",
+    "toux": "cough",
+    "problème oculaire": "eye_issue",
+    "problème aux yeux": "eye_issue",
+    "dermatologue": "dermatologist",
+    "problème de peau": "skin_issue",
+    "éruption cutanée": "skin_rash",
+    "acné": "acne",
+    "démangeaison": "itch",
+    "allergie": "allergy",
+    "médecin généraliste": "general_physician",
+    "ophtalmologue": "ophthalmologist"
 }
 
 def _normalization_hint(text: str) -> str | None:
     t = (text or "").lower()
     hits = []
-    for k, v in _ROMAN_URDU_MAP.items():
+    for k, v in _FRENCH_MEDICAL_MAP.items():
         if k in t:
             hits.append(f"{k}→{v}")
     if hits:
-        return "Normalization hint: interpret roman-Urdu tokens as → " + ", ".join(sorted(set(hits)))
+        return "Normalization hint: interpret French medical terms as → " + ", ".join(sorted(set(hits)))
     return None
 
 def _detect_language(text: str) -> str:
     """
-    Detect if text is in Roman Urdu or English.
-    Returns 'urdu' for Roman Urdu, 'english' for English.
+    Detect if text is in French or English.
+    Returns 'french' for French, 'english' for English.
     """
-    # Check for Roman Urdu patterns
-    roman_urdu_indicators = [
-        "bukhar", "sar dard", "sirdard", "zukam", "jukam", "khansi", 
-        "ankh", "aankh", "ankhon", "derma", "kharish", "khaarish", 
-        "khujli", "jild", "daane", "hai", "hain", "ka", "ki", "ke", 
-        "mein", "ko", "se", "par", "tak", "bhi", "ya", "aur"
+    # Check for French patterns and accented characters
+    french_indicators = [
+        "é", "è", "ê", "ë", "à", "â", "ù", "û", "ç", "î", "ï",
+        "fièvre", "mal de tête", "grippe", "toux", "dermatologue",
+        "ophtalmologue", "médecin", "rendez-vous", "docteur",
+        "bonjour", "merci", "s'il vous plaît", "je", "vous", "le", "la", "les"
     ]
     
     text_lower = text.lower()
-    urdu_count = sum(1 for indicator in roman_urdu_indicators if indicator in text_lower)
+    french_count = sum(1 for indicator in french_indicators if indicator in text_lower)
     
-    # If we find Roman Urdu indicators, classify as Urdu
-    if urdu_count > 0:
-        return "urdu"
+    # If we find French indicators, classify as French
+    if french_count > 0:
+        return "french"
     
     # Default to English
     return "english"
 
 def _translate_to_english(text: str) -> Dict[str, str]:
     """
-    Translate Roman Urdu to English, or keep English as is.
-    Only supports English and Roman Urdu - other languages are not supported.
+    Translate French to English, or keep English as is.
+    Only supports English and French.
     """
     detected_lang = _detect_language(text)
     
     if detected_lang == "english":
         return {"lang": "english", "english": text}
     
-    # For Roman Urdu, try to translate to English
+    # For French, translate to English
     try:
         prompt = (
-            "Translate Roman Urdu text to English for medical scheduling context. "
-            "Only translate if the text contains Roman Urdu words. "
+            "Translate French text to English for medical scheduling context. "
+            "Only translate if the text contains French words. "
             "If it's already English, return as is. "
-            "Reply strictly as JSON: {\"lang\": \"urdu\" or \"english\", \"english\": \"<english_translation>\"}. "
+            "Reply strictly as JSON: {\"lang\": \"french\" or \"english\", \"english\": \"<english_translation>\"}. "
             "Do not add any extra text.\n\n"
             f"Text: {text}"
         )
@@ -204,7 +188,7 @@ def _translate_to_english(text: str) -> Dict[str, str]:
         )
         data = json.loads(resp['choices'][0]['message']['content'])
         if isinstance(data, dict) and data.get("english"):
-            return {"lang": str(data.get("lang") or "urdu"), "english": str(data.get("english"))}
+            return {"lang": str(data.get("lang") or "french"), "english": str(data.get("english"))}
     except Exception:
         pass
     
@@ -584,7 +568,7 @@ async def chat(body: ChatIn):
     date_context = _get_current_date_context()
     messages.append({"role": "system", "content": date_context})
 
-    # Inject normalization hint if Roman Urdu tokens detected
+    # Inject normalization hint if french tokens detected
     hint = _normalization_hint(body.user)
     if hint:
         messages.append({"role": "system", "content": hint})
@@ -634,8 +618,8 @@ async def chat(body: ChatIn):
         session["last_doctor_query"] = detected_doctor
 
     # Reply language hint
-    if translated_user_message['lang'] == 'urdu':
-        messages.append({"role": "system", "content": "Respond in Roman Urdu (English script with Urdu words). Keep tool arguments in English."})
+    if translated_user_message['lang'] == 'french':
+        messages.append({"role": "system", "content": "Respond in French. Keep tool arguments in English."})
     else:
         messages.append({"role": "system", "content": "Respond in English. Keep tool arguments in English."})
 
@@ -778,8 +762,8 @@ async def chat_stream(body: ChatIn):
         messages.append({"role": "system", "content": f"User asking about specific doctor: {detected_doctor}. Show schedule for next 7 days."})
         session["last_doctor_query"] = detected_doctor
 
-    if translated_user_message['lang'] == 'urdu':
-        messages.append({"role": "system", "content": "Respond in Roman Urdu. Keep tool arguments in English."})
+    if translated_user_message['lang'] == 'french':
+        messages.append({"role": "system", "content": "Respond in French. Keep tool arguments in English."})
     else:
         messages.append({"role": "system", "content": "Respond in English. Keep tool arguments in English."})
 
