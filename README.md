@@ -75,7 +75,6 @@ Example `.env` (fill values):
 ```env
 HUGGINGFACE_API_TOKEN=your_hf_token
 HF_MODEL=deepseek-ai/DeepSeek-V3
-HF_VISION_MODEL=Qwen/Qwen2-VL-7B-Instruct
 GOOGLE_SERVICE_ACCOUNT_FILE=service-account.json
 CLINIC_TIMEZONE=Asia/Karachi
 HOSPITAL_DATA_PATH=data/doctors.json
