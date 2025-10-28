@@ -1,0 +1,70 @@
+{
+  "doctors": [
+    {
+      "doctor_id": "dr_eric",
+      "name": "Dr. Eric",
+      "specialization": "Ophthalmology",
+      "experience_years": 7,
+      "fees": { "online_pkr": 2500, "inperson_pkr": 3500 },
+      "weekly_schedule": {
+        "Mon": ["10:00-12:00", "15:00-17:00"],
+        "Wed": ["10:00-12:00"],
+        "Fri": ["15:00-17:00"]
+      },
+      "calendar_id": "ericpatsilevas83@gmail.com",
+      "location": "Unity Care Clinic, Lahore",
+      "email": "ericpatsilevas83@gmail.com"
+    },
+    {
+      "doctor_id": "dr_diego",
+      "name": "Dr. Diego",
+      "specialization": "Dermatology",
+      "experience_years": 5,
+      "fees": { "online_pkr": 2000, "inperson_pkr": 3000 },
+      "weekly_schedule": {
+        "Tue": ["11:00-13:00", "16:00-18:00"],
+        "Thu": ["11:00-13:00"]
+      },
+      "calendar_id": "diego.aiengineer@gmail.com",
+      "location": "Unity Care Clinic, Lahore",
+      "email": "diego.aiengineer@gmail.com"
+    },
+    {
+      "doctor_id": "dr_ali",
+      "name": "Dr. Ali",
+      "specialization": "General",
+      "experience_years": 3,
+      "fees": { "online_pkr": 1500, "inperson_pkr": 2000 },
+      "weekly_schedule": {
+        "Mon": ["18:00-20:00"],
+        "Wed": ["18:00-20:00"],
+        "Sat": ["10:00-13:00"]
+      },
+      "calendar_id": "gmian3490@gmail.com",
+      "location": "Unity Care Clinic, Lahore",
+      "email": "gmian3490@gmail.com"
+    }
+  ],
+  "condition_map": {
+    "fever": ["dr_ali"],
+    "headache": ["dr_ali"],
+    "flu": ["dr_ali"],
+    "eye_issue": ["dr_eric"],
+    "skin_rash": ["dr_diego"],
+    "dermatology": ["dr_diego"],
+    "skin_specialist": ["dr_diego"],
+    "skin_problem": ["dr_diego"],
+    "skin_disease": ["dr_diego"],
+    "acne": ["dr_diego"],
+    "eczema": ["dr_diego"],
+    "psoriasis": ["dr_diego"],
+    "ophthalmology": ["dr_eric"],
+    "eye_specialist": ["dr_eric"],
+    "eye_problem": ["dr_eric"],
+    "vision": ["dr_eric"],
+    "general": ["dr_ali"],
+    "general_physician": ["dr_ali"],
+    "family_doctor": ["dr_ali"],
+    "primary_care": ["dr_ali"]
+  }
+}
